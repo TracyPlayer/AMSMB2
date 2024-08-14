@@ -2,8 +2,8 @@
 //  Context.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 12/15/23.
-//  Copyright © 2023 Mousavian. Distributed under MIT license.
+//  Created by Amir Abbas on 5/20/18.
+//  Copyright © 2018 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //
 
@@ -156,7 +156,7 @@ extension SMB2Context {
         unsafe?.pointee.server.map(String.init(cString:))
     }
 
-    var share: String? {
+    public var share: String? {
         unsafe?.pointee.share.map(String.init(cString:))
     }
 
