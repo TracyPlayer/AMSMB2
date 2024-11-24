@@ -24,7 +24,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
     fileprivate typealias CopyProgressHandler = (@Sendable
         (_ bytes: Int64, _ soFar: Int64, _ total: Int64) -> Int64?)?
 
-    fileprivate var client: SMB2Client?
+    public var client: SMB2Client?
 
     /// SMB2 Share URL.
     public let url: URL

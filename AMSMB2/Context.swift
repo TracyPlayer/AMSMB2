@@ -11,7 +11,7 @@ import Foundation
 import SMB2
 
 /// Provides synchronous operation on SMB2
-final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchecked Sendable {
+final public class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchecked Sendable {
     var context: UnsafeMutablePointer<smb2_context>?
     private var _context_lock = NSRecursiveLock()
     var timeout: TimeInterval
@@ -155,7 +155,7 @@ extension SMB2Client {
         context?.pointee.server.map(String.init(cString:))
     }
 
-    var share: String? {
+    public var share: String? {
         context?.pointee.share.map(String.init(cString:))
     }
 

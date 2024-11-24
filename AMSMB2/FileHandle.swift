@@ -17,11 +17,11 @@ typealias smb2fh = OpaquePointer
 let O_SYMLINK: Int32 = O_NOFOLLOW
 #endif
 
-final class SMB2FileHandle: @unchecked Sendable {
+final public class SMB2FileHandle: @unchecked Sendable {
     private var client: SMB2Client
     private var handle: smb2fh?
 
-    convenience init(forReadingAtPath path: String, on client: SMB2Client) throws {
+    convenience public init(forReadingAtPath path: String, on client: SMB2Client) throws {
         try self.init(path, flags: O_RDONLY, on: client)
     }
 
@@ -130,7 +130,7 @@ final class SMB2FileHandle: @unchecked Sendable {
         .init(uuid: (try? smb2_get_file_id(handle.unwrap()).unwrap().pointee) ?? compound_file_id)
     }
 
-    func close() {
+    public func close() {
         guard let handle = handle else { return }
         self.handle = nil
         _ = try? client.withThreadSafeContext { context in
@@ -138,7 +138,7 @@ final class SMB2FileHandle: @unchecked Sendable {
         }
     }
 
-    func fstat() throws -> smb2_stat_64 {
+    public func fstat() throws -> smb2_stat_64 {
         let handle = try handle.unwrap()
         var st = smb2_stat_64()
         try client.async_await { context, cbPtr -> Int32 in
@@ -198,14 +198,14 @@ final class SMB2FileHandle: @unchecked Sendable {
     }
 
     @discardableResult
-    func lseek(offset: Int64, whence: SeekWhence) throws -> Int64 {
+    public func lseek(offset: Int64, whence: SeekWhence) throws -> Int64 {
         let handle = try handle.unwrap()
         let result = smb2_lseek(client.context, handle, offset, whence.rawValue, nil)
         try POSIXError.throwIfError(result, description: client.error)
         return result
     }
 
-    func read(length: Int = 0) throws -> Data {
+    public func read(length: Int = 0) throws -> Data {
         precondition(
             length <= UInt32.max, "Length bigger than UInt32.max can't be handled by libsmb2."
         )
@@ -356,12 +356,15 @@ final class SMB2FileHandle: @unchecked Sendable {
 }
 
 extension SMB2FileHandle {
-    struct SeekWhence: RawRepresentable, Sendable {
-        var rawValue: Int32
+    public struct SeekWhence: RawRepresentable, Sendable {
+        public var rawValue: Int32
 
         static let set = SeekWhence(rawValue: SEEK_SET)
         static let current = SeekWhence(rawValue: SEEK_CUR)
         static let end = SeekWhence(rawValue: SEEK_END)
+        public init(rawValue: Int32) {
+            self.rawValue = rawValue
+        }
     }
     
     struct LockOperation: OptionSet, Sendable {
