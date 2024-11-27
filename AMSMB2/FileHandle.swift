@@ -17,11 +17,11 @@ typealias smb2fh = OpaquePointer
 let O_SYMLINK: Int32 = O_NOFOLLOW
 #endif
 
-final public class SMB2FileHandle: @unchecked Sendable {
+public final class SMB2FileHandle: @unchecked Sendable {
     private var client: SMB2Client
     private var handle: smb2fh?
 
-    convenience public init(forReadingAtPath path: String, on client: SMB2Client) throws {
+    public convenience init(forReadingAtPath path: String, on client: SMB2Client) throws {
         try self.init(path, flags: O_RDONLY, on: client)
     }
 
