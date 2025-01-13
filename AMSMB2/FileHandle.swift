@@ -362,7 +362,6 @@ public final class SMB2FileHandle: @unchecked Sendable {
 }
 
 extension SMB2FileHandle {
-
     public struct SeekWhence: RawRepresentable, Hashable, Sendable, CustomStringConvertible {
         public var rawValue: Int32
         
@@ -382,7 +381,6 @@ extension SMB2FileHandle {
                 return "Unknown"
             }
         }
-
 
         static let set = SeekWhence(rawValue: SEEK_SET)
         static let current = SeekWhence(rawValue: SEEK_CUR)
