@@ -421,7 +421,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
      - Returns: An array of `[URLResourceKey: Any]` which holds files' attributes. file name is stored in `.nameKey`.
      */
     open func contentsOfDirectory(atPath path: String, recursive: Bool = false) async throws
-    -> [[URLResourceKey: any Sendable]]
+        -> [[URLResourceKey: any Sendable]]
     {
         try await withCheckedThrowingContinuation { continuation in
             contentsOfDirectory(
