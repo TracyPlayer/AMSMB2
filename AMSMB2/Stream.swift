@@ -171,7 +171,8 @@ public class AsyncInputStream<Seq>: InputStream, @unchecked Sendable where Seq: 
     }
 
     private func prefetchData() {
-        Task {
+        Task { @Sendable [weak self] in
+            guard let self else { return }
             do {
                 while let data = try await iterator.next() {
                     bufferLock.withLock {
