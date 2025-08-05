@@ -1146,7 +1146,9 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         stream: S, toPath path: String,
         chunkSize: Int = 0, progress: WriteProgressHandler,
         completionHandler: SimpleCompletionHandler
-    ) where S: AsyncSequence & Sendable, S.Element: DataProtocol, S: SendableMetatype, S.Element: SendableMetatype, S.AsyncIterator: SendableMetatype {
+    ) where S: AsyncSequence & Sendable, S.Element: DataProtocol, S: SendableMetatype, S.Element: SendableMetatype,
+        S.AsyncIterator: SendableMetatype
+    {
         with(completionHandler: completionHandler) { client in
             try self.write(
                 client: client, from: AsyncInputStream(stream: stream), toPath: path, chunkSize: chunkSize,
@@ -1172,7 +1174,9 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
      */
     open func write<S>(
         stream: S, toPath path: String, progress: WriteProgressHandler
-    ) async throws where S: AsyncSequence & Sendable, S.Element: DataProtocol, S: SendableMetatype, S.Element: SendableMetatype, S.AsyncIterator: SendableMetatype {
+    ) async throws where S: AsyncSequence & Sendable, S.Element: DataProtocol, S: SendableMetatype, S.Element: SendableMetatype,
+        S.AsyncIterator: SendableMetatype
+    {
         try await withCheckedThrowingContinuation { continuation in
             write(
                 stream: stream, toPath: path, progress: progress,

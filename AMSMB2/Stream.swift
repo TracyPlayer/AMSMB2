@@ -102,7 +102,9 @@ extension AsyncThrowingStream where Element == Data, Failure == any Error {
     }
 }
 
-public class AsyncInputStream<Seq>: InputStream, @unchecked Sendable where Seq: AsyncSequence, Seq.Element: DataProtocol, Seq: SendableMetatype, Seq.Element: SendableMetatype, Seq.AsyncIterator: SendableMetatype {
+public class AsyncInputStream<Seq>: InputStream, @unchecked Sendable where Seq: AsyncSequence, Seq.Element: DataProtocol,
+    Seq: SendableMetatype, Seq.Element: SendableMetatype, Seq.AsyncIterator: SendableMetatype
+{
     private var stream: Seq
     private var iterator: Seq.AsyncIterator
     private var buffer: Data?
