@@ -97,7 +97,7 @@ public final class SMB2FileHandle: @unchecked Sendable {
         self.handle = smb2_fh_from_file_id(client.context, &fileDescriptor)
     }
 
-    // This initializer does not support O_SYMLINK.
+    /// This initializer does not support O_SYMLINK.
     private init(_ path: String, flags: Int32, lock: OpLock = .none, on client: SMB2Client) throws {
         let (_, handle) = try client.async_await(dataHandler: OpaquePointer.init) {
             context, cbPtr -> Int32 in

@@ -94,7 +94,7 @@ extension Dictionary where Key == URLResourceKey {
         self[key] as? T
     }
 
-    private func value<T>(forKey key: Key) -> T where T: EmptyInitializable {
+    private func value<T: EmptyInitializable>(forKey key: Key) -> T {
         self[key] as? T ?? T()
     }
 
@@ -263,8 +263,8 @@ func asyncHandler(_ continuation: CheckedContinuation<Void, any Error>) -> @Send
     }
 }
 
-func asyncHandler<T>(_ continuation: CheckedContinuation<T, any Error>)
-    -> @Sendable (Result<T, any Error>) -> Void where T: Sendable
+func asyncHandler<T: Sendable>(_ continuation: CheckedContinuation<T, any Error>)
+    -> @Sendable (Result<T, any Error>) -> Void
 {
     { result in
         continuation.resume(with: result)

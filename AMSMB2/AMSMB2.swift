@@ -13,7 +13,7 @@ import FoundationNetworking
 #endif
 import SMB2
 
-/// Implements SMB2 File operations.
+// Implements SMB2 File operations.
 #if canImport(Darwin)
 @objc(AMSMB2Manager)
 #endif
@@ -72,8 +72,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         c.append((label: "user", value: _user))
         if let connectedShare = client?.share { c.append((label: "share", value: connectedShare)) }
 
-        let m = Mirror(self, children: c, displayStyle: .class)
-        return m
+        return Mirror(self, children: c, displayStyle: .class)
     }
 
     /**
@@ -959,7 +958,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         }
     }
 
-    // **DEPRECATED, DON'T USE**
+    /// **DEPRECATED, DON'T USE**
     @available(swift, deprecated: 1)
     open func contents(
         atPath path: String, offset: Int64 = 0,

@@ -14,7 +14,9 @@ extension SMB2Manager {
     /// SMB2 Share URL.
     @available(swift, obsoleted: 1.0)
     @objc(url)
-    var __url: URL { url }
+    var __url: URL {
+        url
+    }
     
     /// The timeout interval to use when doing an operation until getting response. Default value is 60 seconds.
     /// Set this to 0 or negative value in order to disable it.

@@ -7,9 +7,8 @@
 //  All rights reserved.
 //
 
-import XCTest
-
 import Atomics
+import XCTest
 #if canImport(Darwin)
 @preconcurrency import Darwin
 #else
@@ -37,8 +36,8 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
     
     @available(iOS 11.0, macOS 10.13, tvOS 11.0, *)
-    func testNSCodable() {
-        let url = URL(string: "smb://192.168.1.1/share")!
+    func testNSCodable() throws {
+        let url = try XCTUnwrap(URL(string: "smb://192.168.1.1/share"))
         let credential = URLCredential(user: "user", password: "password", persistence: .forSession)
         let smb = SMB2Manager(url: url, credential: credential)
         XCTAssertNotNil(smb)
@@ -48,7 +47,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
         let data = archiver.encodedData
         XCTAssertNil(archiver.error)
         XCTAssertFalse(data.isEmpty)
-        let unarchiver = try! NSKeyedUnarchiver(forReadingFrom: data)
+        let unarchiver = try NSKeyedUnarchiver(forReadingFrom: data)
         unarchiver.decodingFailurePolicy = .setErrorAndReturn
         unarchiver.requiresSecureCoding = true
         let decodedSMB = unarchiver.decodeObject(
@@ -60,38 +59,38 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNil(unarchiver.error)
     }
 
-    func testCoding() {
-        let url = URL(string: "smb://192.168.1.1/share")!
+    func testCoding() throws {
+        let url = try XCTUnwrap(URL(string: "smb://192.168.1.1/share"))
         let credential = URLCredential(user: "user", password: "password", persistence: .forSession)
         let smb = SMB2Manager(url: url, domain: "", credential: credential)
         XCTAssertNotNil(smb)
         do {
             let encoder = JSONEncoder()
-            let json = try encoder.encode(smb!)
+            let json = try encoder.encode(XCTUnwrap(smb))
             XCTAssertFalse(json.isEmpty)
             let decoder = JSONDecoder()
             let decodedSMB = try decoder.decode(SMB2Manager.self, from: json)
-            XCTAssertEqual(smb!.url, decodedSMB.url)
-            XCTAssertEqual(smb!.timeout, decodedSMB.timeout)
+            XCTAssertEqual(smb?.url, decodedSMB.url)
+            XCTAssertEqual(smb?.timeout, decodedSMB.timeout)
 
-            let errorJson = String(data: json, encoding: .utf8)!.replacingOccurrences(
+            let errorJson = try XCTUnwrap(String(data: json, encoding: .utf8)?.replacingOccurrences(
                 of: "smb:", with: "smb2:"
-            ).data(using: .utf8)!
+            ).data(using: .utf8))
             XCTAssertThrowsError(try decoder.decode(SMB2Manager.self, from: errorJson))
         } catch {
             XCTAssert(false, error.localizedDescription)
         }
     }
 
-    func testNSCopy() {
-        let url = URL(string: "smb://192.168.1.1/share")!
+    func testNSCopy() throws {
+        let url = try XCTUnwrap(URL(string: "smb://192.168.1.1/share"))
         let credential = URLCredential(user: "user", password: "password", persistence: .forSession)
-        let smb = SMB2Manager(url: url, domain: "", credential: credential)!
-        let smbCopy = smb.copy() as! SMB2Manager
+        let smb = try XCTUnwrap(SMB2Manager(url: url, domain: "", credential: credential))
+        let smbCopy = try XCTUnwrap(smb.copy() as? SMB2Manager)
         XCTAssertEqual(smb.url, smbCopy.url)
     }
 
-    // Change server address and testing share
+    /// Change server address and testing share
     lazy var server: URL = .init(string: ProcessInfo.processInfo.environment["SMB_SERVER"]!)!
 
     lazy var share: String = ProcessInfo.processInfo.environment["SMB_SHARE"]!
@@ -109,14 +108,14 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     lazy var encrypted: Bool = ProcessInfo.processInfo.environment["SMB_ENCRYPTED"] == "1"
 
     func testConnectDisconnect() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         try await smb.disconnectShare(gracefully: false)
         try await smb.connectShare(name: share, encrypted: encrypted)
     }
 
     func testShareEnum() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
 
         let shares = try await smb.listShares()
         XCTAssertFalse(shares.isEmpty)
@@ -133,21 +132,21 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testFileSystemAttributes() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         let fsAttributes = try await smb.attributesOfFileSystem(forPath: "/")
         XCTAssertFalse(fsAttributes.isEmpty)
-        XCTAssertGreaterThanOrEqual(fsAttributes[.systemSize] as! Int64, 0)
-        XCTAssertGreaterThanOrEqual(fsAttributes[.systemFreeSize] as! Int64, 0)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(fsAttributes[.systemSize] as? Int64), 0)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(fsAttributes[.systemFreeSize] as? Int64), 0)
         XCTAssertGreaterThanOrEqual(
-            fsAttributes[.systemSize] as! Int64, fsAttributes[.systemFreeSize] as! Int64
+            try XCTUnwrap(fsAttributes[.systemSize] as? Int64), try XCTUnwrap(fsAttributes[.systemFreeSize] as? Int64)
         )
     }
     
     func testFileAttributes() async throws {
         let file = fileName()
         let size: Int = random(max: 0x000800)
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let data = randomData(size: size)
 
         addTeardownBlock {
@@ -161,7 +160,10 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNotNil(initialAttribs.name)
         XCTAssertNotNil(initialAttribs.contentModificationDate)
         XCTAssertNotNil(initialAttribs.creationDate)
-        XCTAssertGreaterThanOrEqual(initialAttribs.contentModificationDate!, initialAttribs.creationDate!)
+        XCTAssertGreaterThanOrEqual(
+            try XCTUnwrap(initialAttribs.contentModificationDate),
+            try XCTUnwrap(initialAttribs.creationDate)
+        )
         XCTAssertEqual(initialAttribs[.isHiddenKey] as? Bool, nil)
         
         try await smb.setAttributes(attributes: [
@@ -178,7 +180,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
         let file = fileName()
         let renamedFile = fileName(postfix: "Renamed")
         let size: Int = random(max: 0x000800)
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let data = randomData(size: size)
 
         addTeardownBlock {
@@ -197,7 +199,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     func testFileTruncate() async throws {
         let file = fileName()
         let size: Int = random(min: 0x000401, max: 0x002000)
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let data = randomData(size: size)
 
         addTeardownBlock {
@@ -214,7 +216,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
     
     func testListing() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         let contents = try await smb.contentsOfDirectory(atPath: "/")
         XCTAssertFalse(contents.isEmpty)
@@ -223,15 +225,15 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
         XCTAssertNotNil(file.name)
         XCTAssertNotNil(file.contentModificationDate)
         XCTAssertNotNil(file.creationDate)
-        XCTAssertGreaterThanOrEqual(file.contentModificationDate!, file.creationDate!)
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(file.contentModificationDate), try XCTUnwrap(file.creationDate))
     }
 
     func testSymlink() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         let contents = try await smb.contentsOfDirectory(atPath: "/")
         if let symlink = contents.first(where: { $0.isSymbolicLink }) {
-            let destination = try await smb.destinationOfSymbolicLink(atPath: symlink.path!)
+            let destination = try await smb.destinationOfSymbolicLink(atPath: XCTUnwrap(symlink.path))
             XCTAssert(
                 !destination.trimmingCharacters(
                     in: CharacterSet.alphanumerics.inverted
@@ -241,7 +243,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
     
     func testCreateSymlink() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let target = fileName(postfix: "Target")
         let link = fileName()
         let data = randomData(size: 0x000800)
@@ -266,7 +268,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
     
     func testRemoveSymlink() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let target = fileName(postfix: "Target")
         let link = fileName()
         let data = randomData(size: 0x000800)
@@ -288,7 +290,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testDirectoryOperation() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         try await smb.createDirectory(atPath: "testEmpty")
         try await smb.removeDirectory(atPath: "testEmpty", recursive: false)
@@ -372,7 +374,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     func testChunkedLoad() async throws {
         let file = fileName()
         let size: Int = random(max: 0xf00000)
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         print(#function, "test size:", size)
         let data = randomData(size: size)
 
@@ -401,7 +403,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testUploadDownload() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let size: Int = random(max: 0xf00000)
         print(#function, "test size:", size)
         let url = dummyFile(size: size)
@@ -448,7 +450,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
 
     func testStreamUploadDownload() async throws {
         let file = fileName()
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let size: Int = random(max: 0xf00000)
         print(#function, "test size:", size)
         let url = dummyFile(size: size)
@@ -493,7 +495,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
             return self.dummyFile(size: size)
         }
         
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         try await smb.connectShare(name: share, encrypted: encrypted)
         
         addTeardownBlock {
@@ -537,7 +539,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testTruncate() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let size: Int = random(max: 0xf00000)
         let url = dummyFile(size: size)
         let file = fileName()
@@ -558,7 +560,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testCopy() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         let size: Int = random(max: 0x400000)
         print(#function, "test size:", size)
         let data = randomData(size: size)
@@ -584,7 +586,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testMove() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
         addTeardownBlock {
             try? await smb.removeFile(atPath: folderName())
             try? await smb.removeFile(atPath: folderName(postfix: "Dest"))
@@ -598,7 +600,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     func testRecursiveCopyRemove() async throws {
         let root = folderName()
         let rootCopy = folderName(postfix: " Copy")
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
 
         addTeardownBlock {
             try? await smb.removeDirectory(atPath: root, recursive: true)
@@ -615,7 +617,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     }
 
     func testRemove() async throws {
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
 
         addTeardownBlock {
             try? await smb.removeDirectory(atPath: folderName(), recursive: true)
@@ -630,7 +632,7 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
     
     func testMonitor() async throws {
         try XCTSkipIf(true)
-        let smb = SMB2Manager(url: server, credential: credential)!
+        let smb = try XCTUnwrap(SMB2Manager(url: server, credential: credential))
 
         addTeardownBlock {
             try? await smb.removeDirectory(atPath: "\(folderName())", recursive: true)

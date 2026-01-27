@@ -121,7 +121,9 @@ enum MSRPC {
 
         typealias Element = UInt8
 
-        static var count: Int { 16 }
+        static var count: Int {
+            16
+        }
 
         let command: Command
         var length: UInt16

@@ -58,8 +58,7 @@ public final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, 
         c.append((label: "isConnected", value: isConnected))
         c.append((label: "timeout", value: timeout))
 
-        let m = Mirror(self, children: c, displayStyle: .class)
-        return m
+        return Mirror(self, children: c, displayStyle: .class)
     }
 }
 

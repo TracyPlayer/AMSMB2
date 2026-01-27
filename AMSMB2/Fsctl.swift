@@ -69,20 +69,20 @@ enum IOCtl {
     }
 }
 
-// - MARK: Pipe
+/// - MARK: Pipe
 extension IOCtl.Command {
     static let pipePeek = Self(SMB2_FSCTL_PIPE_PEEK)
     static let pipeWait = Self(SMB2_FSCTL_PIPE_WAIT)
     static let pipeTransceive = Self(SMB2_FSCTL_PIPE_TRANSCEIVE)
 }
 
-// - MARK: DFS
+/// - MARK: DFS
 extension IOCtl.Command {
     static let dfsGetReferrals = Self(SMB2_FSCTL_DFS_GET_REFERRALS)
     static let dfsGetReferralsEx = Self(SMB2_FSCTL_DFS_GET_REFERRALS_EX)
 }
 
-// - MARK: Server-side Copy
+/// - MARK: Server-side Copy
 extension IOCtl.Command {
     static let srvCopyChunk = Self(SMB2_FSCTL_SRV_COPYCHUNK)
     static let srvCopyChunkWrite = Self(SMB2_FSCTL_SRV_COPYCHUNK_WRITE)
@@ -145,7 +145,7 @@ extension IOCtl {
     }
 }
 
-// - MARK: Reparse Point
+/// - MARK: Reparse Point
 extension IOCtl.Command {
     static let getReparsePoint = Self(SMB2_FSCTL_GET_REPARSE_POINT)
     static let setReparsePoint = Self(SMB2_FSCTL_SET_REPARSE_POINT)
