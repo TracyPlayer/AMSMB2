@@ -22,6 +22,7 @@ public final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, 
     }
 
     deinit {
+        guard context != nil else { return }
         if isConnected {
             try? self.disconnect()
         }
@@ -104,7 +105,7 @@ extension SMB2Client {
         }
         set {
             try? withThreadSafeContext { context in
-                smb2_set_password(context, newValue)
+                smb2_set_password(context, newValue != "" ? newValue : nil)
             }
         }
     }
@@ -227,10 +228,8 @@ extension SMB2Client {
     }
 
     func disconnect() throws {
-        try async_await { context, cbPtr -> Int32 in
-            smb2_free_all_dirs(context)
-            smb2_free_all_fhs(context)
-            return smb2_disconnect_share_async(context, SMB2Client.generic_handler, cbPtr)
+        _=try? async_await { context, cbPtr -> Int32 in
+            smb2_disconnect_share_async(context, SMB2Client.generic_handler, cbPtr)
         }
     }
 

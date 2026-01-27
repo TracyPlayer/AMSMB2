@@ -652,8 +652,8 @@ class SMB2ManagerTests: XCTestCase, @unchecked Sendable {
                     throw error
                 }
             }
-            try await Task.sleep(for: .seconds(1))
             group.addTask {
+                try await Task.sleep(nanoseconds: NSEC_PER_SEC)
                 try await smb.write(data: Data(), toPath: "\(folderName())/file", progress: nil)
             }
             try await group.waitForAll()
