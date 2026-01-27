@@ -228,7 +228,7 @@ extension SMB2Client {
     }
 
     func disconnect() throws {
-        _=try? async_await { context, cbPtr -> Int32 in
+        _ = try? async_await { context, cbPtr -> Int32 in
             smb2_disconnect_share_async(context, SMB2Client.generic_handler, cbPtr)
         }
     }
