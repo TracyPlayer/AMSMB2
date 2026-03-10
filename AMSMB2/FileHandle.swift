@@ -384,7 +384,7 @@ extension SMB2FileHandle {
         static let end = SeekWhence(rawValue: SEEK_END)
     }
     
-    struct LockOperation: OptionSet, Sendable {
+    struct LockOperation: OptionSet {
         var rawValue: Int32
         
         static let shared = LockOperation(rawValue: LOCK_SH)
@@ -402,7 +402,7 @@ extension SMB2FileHandle {
         }
     }
     
-    struct Attributes: OptionSet, Sendable {
+    struct Attributes: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -426,7 +426,7 @@ extension SMB2FileHandle {
         static let noScrubData = Self(rawValue: SMB2_FILE_ATTRIBUTE_NO_SCRUB_DATA)
     }
     
-    struct LeaseState: OptionSet, Sendable {
+    struct LeaseState: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -439,7 +439,7 @@ extension SMB2FileHandle {
         static let writeCaching = Self(rawValue: SMB2_LEASE_WRITE_CACHING)
     }
     
-    enum OpLock: Sendable {
+    enum OpLock {
         case none
         case ii
         case exclusive
@@ -480,7 +480,7 @@ extension SMB2FileHandle {
         }
     }
     
-    struct ImpersonationLevel: RawRepresentable, Hashable, Sendable {
+    struct ImpersonationLevel: RawRepresentable, Hashable {
         var rawValue: UInt32
         
         static let anonymous = Self(rawValue: SMB2_IMPERSONATION_ANONYMOUS)
@@ -489,7 +489,7 @@ extension SMB2FileHandle {
         static let delegate = Self(rawValue: SMB2_IMPERSONATION_DELEGATE)
     }
     
-    struct Access: OptionSet, Sendable {
+    struct Access: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -547,7 +547,7 @@ extension SMB2FileHandle {
         private static let readAttributes: Access = [.fileReadAttributes, .fileReadEA, .readControl]
     }
     
-    struct ShareAccess: OptionSet, Sendable {
+    struct ShareAccess: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -570,7 +570,7 @@ extension SMB2FileHandle {
         static let delete = Self(rawValue: SMB2_FILE_SHARE_DELETE)
     }
     
-    struct CreateDisposition: RawRepresentable, Sendable {
+    struct CreateDisposition: RawRepresentable {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -619,7 +619,7 @@ extension SMB2FileHandle {
         static let overwriteIfExists = Self(rawValue: SMB2_FILE_OVERWRITE_IF)
     }
     
-    struct CreateOptions: OptionSet, Sendable {
+    struct CreateOptions: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -699,7 +699,7 @@ extension SMB2FileHandle {
         }
     }
 
-    struct InfoType: RawRepresentable, Sendable {
+    struct InfoType: RawRepresentable {
         var rawValue: UInt8
         
         init(rawValue: UInt8) {
@@ -712,7 +712,7 @@ extension SMB2FileHandle {
         static let quota = Self(rawValue: SMB2_0_INFO_QUOTA)
     }
     
-    struct InfoClass: RawRepresentable, Sendable {
+    struct InfoClass: RawRepresentable {
         var rawValue: UInt8
         
         init(rawValue: UInt8) {
@@ -759,7 +759,7 @@ extension RawRepresentable where RawValue: BinaryInteger {
 }
 
 extension smb2_stat_64 {
-    struct ResourceType: RawRepresentable, Hashable, Sendable {
+    struct ResourceType: RawRepresentable, Hashable {
         var rawValue: UInt32
         
         static let file = Self(rawValue: SMB2_TYPE_FILE)

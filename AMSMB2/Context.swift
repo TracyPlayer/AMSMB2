@@ -474,7 +474,7 @@ extension SMB2Client {
 }
 
 extension SMB2Client {
-    struct NegotiateSigning: OptionSet, Sendable, CustomStringConvertible {
+    struct NegotiateSigning: OptionSet, CustomStringConvertible {
         var rawValue: UInt16
         
         var description: String {
@@ -573,8 +573,8 @@ struct ShareProperties: RawRepresentable {
     }
 }
 
-struct NTStatus: LocalizedError, Hashable, Sendable {
-    enum Severity: UInt32, Hashable, Sendable, CustomStringConvertible {
+struct NTStatus: LocalizedError, Hashable {
+    enum Severity: UInt32, Hashable, CustomStringConvertible {
         case success
         case info
         case warning

@@ -40,7 +40,7 @@ enum MSRPC {
              }
              */
 
-            // First 48 bytes are header, _SHARE_INFO_1 is 12 bytes and "type" starts from 4th byte
+            /// First 48 bytes are header, _SHARE_INFO_1 is 12 bytes and "type" starts from 4th byte
             func typeOffset(_ i: Int) -> Int {
                 48 + i * 12 + 4
             }
