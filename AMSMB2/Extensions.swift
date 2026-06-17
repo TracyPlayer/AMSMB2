@@ -2,7 +2,7 @@
 //  Extensions.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 5/21/18.
+//  Created by Amir Abbas on 2018/5/21.
 //  Copyright © 2018 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //
@@ -244,7 +244,7 @@ extension String {
             result.removeLast()
         }
         result = self + "/" + component.trimmedPath
-        if isDirectory && !result.hasSuffix("/") {
+        if isDirectory, !result.hasSuffix("/") {
             result += "/"
         }
         return result

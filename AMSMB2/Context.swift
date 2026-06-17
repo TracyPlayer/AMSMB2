@@ -2,7 +2,7 @@
 //  Context.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 5/20/18.
+//  Created by Amir Abbas on 2018/5/20.
 //  Copyright © 2018 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //
@@ -16,12 +16,17 @@ import SystemPackage
 #endif
 
 extension FileDescriptor {
-    static var invalid: FileDescriptor { .init(rawValue: -1) }
-    var isValidSocket: Bool { rawValue > 0 }
+    static var invalid: FileDescriptor {
+        .init(rawValue: -1)
+    }
+
+    var isValidSocket: Bool {
+        rawValue > 0
+    }
 }
 
 /// Provides synchronous operation on SMB2
-final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchecked Sendable {
+public final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchecked Sendable {
     var context: UnsafeMutablePointer<smb2_context>?
     private var _context_lock = NSRecursiveLock()
     
@@ -67,8 +72,7 @@ final class SMB2Client: CustomDebugStringConvertible, CustomReflectable, @unchec
         c.append((label: "isConnected", value: isActive))
         c.append((label: "timeout", value: timeout))
 
-        let m = Mirror(self, children: c, displayStyle: .class)
-        return m
+        return Mirror(self, children: c, displayStyle: .class)
     }
 }
 
@@ -190,7 +194,7 @@ extension SMB2Client {
         context?.pointee.server.map(String.init(cString:))
     }
 
-    var share: String? {
+    public var share: String? {
         context?.pointee.share.map(String.init(cString:))
     }
 
@@ -259,7 +263,7 @@ extension SMB2Client {
     }
 
     func disconnect() throws {
-        _=try? async_await { context, cbPtr -> Int32 in
+        _ = try? async_await { context, cbPtr -> Int32 in
             smb2_disconnect_share_async(context, SMB2Client.generic_handler, cbPtr)
         }
     }
@@ -398,7 +402,7 @@ extension SMB2Client {
         }
     }
     
-    private func wait(_ cb: inout CBData) async throws {
+    private func wait(_: inout CBData) async throws {
         let startDate = Date()
         let source = switch try whichEvents() {
         case Int16(POLL_IN):
@@ -408,11 +412,9 @@ extension SMB2Client {
         default:
             throw POSIXError(errno, description: errorString)
         }
-        source.setEventHandler {
-            return
-        }
-        
+        source.setEventHandler {}
     }
+
     private func wait_for_reply(_ cb: inout CBData) throws {
         let startDate = Date()
         while !cb.isFinished {
@@ -527,7 +529,7 @@ extension SMB2Client {
 }
 
 extension SMB2Client {
-    struct NegotiateSigning: OptionSet, Sendable, CustomStringConvertible {
+    struct NegotiateSigning: OptionSet, CustomStringConvertible {
         var rawValue: UInt16
         
         var description: String {
@@ -626,8 +628,8 @@ struct ShareProperties: RawRepresentable {
     }
 }
 
-struct NTStatus: LocalizedError, Hashable, CustomStringConvertible, Sendable {
-    enum Severity: UInt32, Hashable, CustomStringConvertible, Sendable {
+struct NTStatus: LocalizedError, Hashable, CustomStringConvertible {
+    enum Severity: UInt32, Hashable, CustomStringConvertible {
         case success
         case info
         case warning
@@ -686,7 +688,7 @@ struct NTStatus: LocalizedError, Hashable, CustomStringConvertible, Sendable {
     
     func throwIfError() throws {
         if severity == .error {
-            throw POSIXError(errno,description: description)
+            throw POSIXError(errno, description: description)
         }
     }
     

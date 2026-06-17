@@ -2,7 +2,7 @@
 //  FileHandle.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 5/20/18.
+//  Created by Amir Abbas on 2018/5/20.
 //  Copyright © 2018 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //
@@ -19,14 +19,17 @@ import SystemPackage
 typealias smb2fh = OpaquePointer
 
 @inlinable
-var _O_SYNC: CInt { O_SYNC }
-
+var _O_SYNC: CInt {
+    O_SYNC
+}
 
 #if os(Linux) || os(Android) || os(OpenBSD)
 let O_SYMLINK: CInt = O_NOFOLLOW
 #endif
 @inlinable
-var _O_SYMLINK: CInt { O_SYMLINK }
+var _O_SYMLINK: CInt {
+    O_SYMLINK
+}
 
 extension FileDescriptor.OpenOptions {
     /// Indicates that each write operation is synchronous.
@@ -61,19 +64,23 @@ extension FileDescriptor.OpenOptions {
     ///
     /// The corresponding C constant is `O_SYMLINK`.
     @_alwaysEmitIntoClient
-    public static var symlink: OpenOptions { .init(rawValue: _O_SYMLINK) }
+    public static var symlink: OpenOptions {
+        .init(rawValue: _O_SYMLINK)
+    }
 
     @_alwaysEmitIntoClient
     @available(*, unavailable, renamed: "symlink")
-    public static var O_SYMLINK: OpenOptions { symlink }
+    public static var O_SYMLINK: OpenOptions {
+        symlink
+    }
 #endif
 }
 
-final class SMB2FileHandle: @unchecked Sendable {
+public final class SMB2FileHandle: @unchecked Sendable {
     private var client: SMB2Client
     private var handle: smb2fh?
 
-    convenience init(forReadingAtPath path: String, on client: SMB2Client) throws {
+    public convenience init(forReadingAtPath path: String, on client: SMB2Client) throws {
         try self.init(path, .readOnly, on: client)
     }
 
@@ -82,7 +89,7 @@ final class SMB2FileHandle: @unchecked Sendable {
     }
 
     convenience init(forUpdatingAtPath path: String, on client: SMB2Client) throws {
-        try self.init(path, .readWrite, options: [.append] , on: client)
+        try self.init(path, .readWrite, options: [.append], on: client)
     }
 
     convenience init(forOverwritingAtPath path: String, on client: SMB2Client) throws {
@@ -154,7 +161,7 @@ final class SMB2FileHandle: @unchecked Sendable {
         self.handle = smb2_fh_from_file_id(client.context, &fileDescriptor)
     }
 
-    // This initializer does not support O_SYMLINK.
+    /// This initializer does not support O_SYMLINK.
     private init(
         _ path: String, _ mode: FileDescriptor.AccessMode,
         options: FileDescriptor.OpenOptions = .init(),
@@ -191,7 +198,7 @@ final class SMB2FileHandle: @unchecked Sendable {
         .init(uuid: (try? smb2_get_file_id(handle.unwrap()).unwrap().pointee) ?? compound_file_id)
     }
 
-    func close() throws {
+    public func close() throws {
         guard let handle = handle else { return }
         self.handle = nil
         _ = try client.withThreadSafeContext { context in
@@ -199,7 +206,7 @@ final class SMB2FileHandle: @unchecked Sendable {
         }
     }
 
-    func fstat() throws -> smb2_stat_64 {
+    public func fstat() throws -> smb2_stat_64 {
         let handle = try handle.unwrap()
         var st = smb2_stat_64()
         try client.async_await { context, cbPtr -> Int32 in
@@ -263,14 +270,14 @@ final class SMB2FileHandle: @unchecked Sendable {
     }
 
     @discardableResult
-    func seek(offset: Int64, from whence: FileDescriptor.SeekOrigin) throws -> Int64 {
+    public func seek(offset: Int64, from whence: FileDescriptor.SeekOrigin) throws -> Int64 {
         let handle = try handle.unwrap()
         let result = smb2_lseek(client.context, handle, offset, whence.rawValue, nil)
         try POSIXError.throwIfError(result, description: client.errorString)
         return result
     }
 
-    func read(length: Int = 0) throws -> Data {
+    public func read(length: Int = 0) throws -> Data {
         precondition(
             length <= UInt32.max, "Length bigger than UInt32.max can't be handled by libsmb2."
         )
@@ -422,7 +429,7 @@ final class SMB2FileHandle: @unchecked Sendable {
 }
 
 extension SMB2FileHandle {
-    struct LockOperation: OptionSet, Sendable {
+    struct LockOperation: OptionSet {
         var rawValue: Int32
         
         static let shared = LockOperation(rawValue: LOCK_SH)
@@ -440,7 +447,7 @@ extension SMB2FileHandle {
         }
     }
     
-    struct Attributes: OptionSet, Sendable {
+    struct Attributes: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -464,7 +471,7 @@ extension SMB2FileHandle {
         static let noScrubData = Self(rawValue: SMB2_FILE_ATTRIBUTE_NO_SCRUB_DATA)
     }
     
-    struct LeaseState: OptionSet, Sendable {
+    struct LeaseState: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -477,7 +484,7 @@ extension SMB2FileHandle {
         static let writeCaching = Self(rawValue: SMB2_LEASE_WRITE_CACHING)
     }
     
-    enum OpLock: Sendable {
+    enum OpLock {
         case none
         case ii
         case exclusive
@@ -518,7 +525,7 @@ extension SMB2FileHandle {
         }
     }
     
-    struct ImpersonationLevel: RawRepresentable, Hashable, Sendable {
+    struct ImpersonationLevel: RawRepresentable, Hashable {
         var rawValue: UInt32
         
         static let anonymous = Self(rawValue: SMB2_IMPERSONATION_ANONYMOUS)
@@ -527,7 +534,7 @@ extension SMB2FileHandle {
         static let delegate = Self(rawValue: SMB2_IMPERSONATION_DELEGATE)
     }
     
-    struct Access: OptionSet, Sendable {
+    struct Access: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -585,7 +592,7 @@ extension SMB2FileHandle {
         private static let readAttributes: Access = [.fileReadAttributes, .fileReadEA, .readControl]
     }
     
-    struct ShareAccess: OptionSet, Sendable {
+    struct ShareAccess: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -608,7 +615,7 @@ extension SMB2FileHandle {
         static let delete = Self(rawValue: SMB2_FILE_SHARE_DELETE)
     }
     
-    struct CreateDisposition: RawRepresentable, Sendable {
+    struct CreateDisposition: RawRepresentable {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -657,7 +664,7 @@ extension SMB2FileHandle {
         static let overwriteIfExists = Self(rawValue: SMB2_FILE_OVERWRITE_IF)
     }
     
-    struct CreateOptions: OptionSet, Sendable {
+    struct CreateOptions: OptionSet {
         var rawValue: UInt32
         
         init(rawValue: UInt32) {
@@ -676,7 +683,7 @@ extension SMB2FileHandle {
             // are present on the same open. Suppress the buffering flag
             // when O_DIRECTORY is also set so callers don't have to
             // remember the constraint at every directory open site.
-            if options.contains(.sync) && !options.contains(.directory) {
+            if options.contains(.sync), !options.contains(.directory) {
                 insert(.noIntermediateBuffering)
             }
             if options.contains(.symlink) {
@@ -744,7 +751,7 @@ extension SMB2FileHandle {
         }
     }
 
-    struct InfoType: RawRepresentable, Sendable {
+    struct InfoType: RawRepresentable {
         var rawValue: UInt8
         
         init(rawValue: UInt8) {
@@ -757,7 +764,7 @@ extension SMB2FileHandle {
         static let quota = Self(rawValue: SMB2_0_INFO_QUOTA)
     }
     
-    struct InfoClass: RawRepresentable, Sendable {
+    struct InfoClass: RawRepresentable {
         var rawValue: UInt8
         
         init(rawValue: UInt8) {
@@ -804,7 +811,7 @@ extension RawRepresentable where RawValue: BinaryInteger {
 }
 
 extension smb2_stat_64 {
-    struct ResourceType: RawRepresentable, Hashable, Sendable {
+    struct ResourceType: RawRepresentable, Hashable {
         var rawValue: UInt32
         
         static let file = Self(rawValue: SMB2_TYPE_FILE)

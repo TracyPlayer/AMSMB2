@@ -2,16 +2,9 @@
 //  CreateOptionsTests.swift
 //  AMSMB2
 //
-//  Locks in the constraint that `CreateOptions.init(flags:)` does not
-//  emit `.noIntermediateBuffering` when `O_DIRECTORY` is also set.
-//
-//  Per MS-FSCC §2.1.5.1, FILE_NO_INTERMEDIATE_BUFFERING does not apply
-//  to directories. Windows enforces this strictly: a CREATE that
-//  carries both FILE_DIRECTORY_FILE and FILE_NO_INTERMEDIATE_BUFFERING
-//  is rejected with STATUS_INVALID_PARAMETER (0xC000000D) before any
-//  follow-up request (CHANGE_NOTIFY, etc.) ever runs.
-//
-//  Distributed under MIT license.
+//  Created by Amir Abbas on 2026/4/22.
+//  Copyright © 2026 Mousavian. Distributed under MIT license.
+//  All rights reserved.
 //
 
 import XCTest
@@ -23,7 +16,6 @@ import Glibc
 @testable import AMSMB2
 
 final class CreateOptionsTests: XCTestCase {
-
     func testO_SYNCAloneEmitsNoIntermediateBuffering() {
         let opts = SMB2FileHandle.CreateOptions(flags: O_RDONLY | O_SYNC)
         XCTAssertTrue(opts.contains(.noIntermediateBuffering),

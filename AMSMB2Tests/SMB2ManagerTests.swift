@@ -2,7 +2,7 @@
 //  SMB2ManagerTests.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 5/20/18.
+//  Created by Amir Abbas on 2018/5/20.
 //  Copyright © 2018 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //

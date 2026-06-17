@@ -2,7 +2,7 @@
 //  Parsers.swift
 //  AMSMB2
 //
-//  Created by Amir Abbas on 10/30/19.
+//  Created by Amir Abbas on 2019/10/30.
 //  Copyright © 2019 Mousavian. Distributed under MIT license.
 //  All rights reserved.
 //
