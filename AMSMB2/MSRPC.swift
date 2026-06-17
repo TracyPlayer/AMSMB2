@@ -60,7 +60,7 @@ enum MSRPC {
 
                 offset += 12
                 if offset + nameActualCount * 2 > data.count {
-                    throw POSIXError(.EINVAL, userInfo: [:])
+                    throw POSIXError(.invalidArgument, description: nil)
                 }
 
                 // Getting utf16le data, omitting nul char
@@ -81,7 +81,7 @@ enum MSRPC {
 
                 offset += 12
                 if offset + commentActualCount * 2 > data.count {
-                    throw POSIXError(.EINVAL, userInfo: [:])
+                    throw POSIXError(.invalidArgument, description: nil)
                 }
 
                 // Getting utf16le data, omitting nul char
@@ -248,7 +248,7 @@ enum MSRPC {
     static func validateBindData<DataType: DataProtocol>(_ recvBindData: DataType) throws {
         // Bind command result is exactly 68 bytes here. 54 + ("\PIPE\srvsvc" ascii length + 1 byte padding).
         if recvBindData.count < 68 {
-            throw POSIXError(.EBADMSG, description: "Binding failure: Invalid size")
+            throw POSIXError(.badMessage, description: "Binding failure: Invalid size")
         }
 
         // These bytes contains Ack result, 30 + ("\PIPE\srvsvc" ascii length + 1 byte padding).
@@ -258,7 +258,7 @@ enum MSRPC {
             // Ack result is not acceptance (0x0000)
             let errorCode = UInt16(byte44) + (UInt16(byte45) << 8)
             let errorCodeString = String(errorCode, radix: 16, uppercase: false)
-            throw POSIXError(.EBADMSG, description: "Binding failure: \(errorCodeString)")
+            throw POSIXError(.badMessage, description: "Binding failure: \(errorCodeString)")
         }
     }
 }

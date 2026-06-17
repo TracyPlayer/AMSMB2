@@ -42,7 +42,7 @@ extension InputStream {
         var buffer = [UInt8](repeating: 0, count: length)
         let result = read(&buffer, maxLength: buffer.count)
         if result < 0 {
-            throw streamError ?? POSIXError(.EIO, description: "Unknown stream error.")
+            throw streamError ?? POSIXError(.ioError, description: "Unknown stream error.")
         } else {
             return Data(buffer.prefix(result))
         }
@@ -54,7 +54,7 @@ extension OutputStream {
         var buffer = Array(data)
         let result = write(&buffer, maxLength: buffer.count)
         if result < 0 {
-            throw streamError ?? POSIXError(.EIO, description: "Unknown stream error.")
+            throw streamError ?? POSIXError(.ioError, description: "Unknown stream error.")
         } else {
             return result
         }
@@ -92,7 +92,7 @@ extension AsyncThrowingStream where Element == Data, Failure == any Error {
     
     func write(toFileAt file: URL) async throws {
         guard let stream = OutputStream(url: file, append: false) else {
-            throw POSIXError(.EINVAL, description: "File not fould")
+            throw POSIXError(.noSuchFileOrDirectory, description: nil)
         }
         try await stream.withOpenStream {
             for try await data in self {

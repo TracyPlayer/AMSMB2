@@ -390,7 +390,7 @@ extension SMB2Manager {
         completionHandler: @Sendable @escaping (_ contents: Data?, _ error: (any Error)?) -> Void
     ) {
         guard offset >= 0 else {
-            let error = POSIXError(.EINVAL, description: "Invalid content offset.")
+            let error = POSIXError(.invalidArgument, description: "Invalid content offset.")
             completionHandler(nil, error)
             return
         }

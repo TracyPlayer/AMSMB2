@@ -1,14 +1,20 @@
 // swift-tools-version:6.0
 import PackageDescription
 
+extension [Platform] {
+    static let darwin: [Platform] = [.macOS, .macCatalyst, .iOS, .tvOS, .watchOS, .visionOS]
+    static let nonWasm: [Platform] = [.linux, .windows, .android, .openbsd]
+    static let nonDarwin: [Platform] = nonWasm + [.wasi]
+}
+
 let package = Package(
     name: "AMSMB2",
     platforms: [
-        .iOS(.v13),
-        .macOS(.v10_15),
-        .macCatalyst(.v13),
+        .iOS(.v14),
+        .macOS(.v11),
+        .macCatalyst(.v14),
         .tvOS(.v14),
-        .watchOS(.v6),
+        .watchOS(.v7),
         .visionOS(.v1),
     ],
     products: [
@@ -19,6 +25,7 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-system.git", .upToNextMajor(from: "1.6.4")),
         .package(url: "https://github.com/apple/swift-atomics.git", .upToNextMajor(from: "1.2.0")),
     ],
     targets: [
@@ -54,6 +61,7 @@ let package = Package(
             name: "AMSMB2",
             dependencies: [
                 "libsmb2",
+                .product(name: "SystemPackage", package: "swift-system", condition: .when(platforms: .nonDarwin)),
             ],
             path: "AMSMB2"
         ),

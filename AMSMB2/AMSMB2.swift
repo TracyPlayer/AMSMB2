@@ -12,6 +12,11 @@ import Foundation
 import FoundationNetworking
 #endif
 import SMB2
+#if canImport(System)
+import System
+#else
+import SystemPackage
+#endif
 
 // Implements SMB2 File operations.
 #if canImport(Darwin)
@@ -64,7 +69,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         var c: [(label: String?, value: Any)] = []
 
         c.append((label: "url", value: url))
-        c.append((label: "isConnected", value: (client?.isConnected ?? false)))
+        c.append((label: "isConnected", value: (client?.isActive ?? false)))
         c.append((label: "timeout", value: _timeout))
         if _domain.isEmpty { c.append((label: "domain", value: _domain)) }
         if _workstation.isEmpty { c.append((label: "workstation", value: _workstation)) }
@@ -238,7 +243,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         with(completionHandler: completionHandler) {
             self.connectLock.lock()
             defer { self.connectLock.unlock() }
-            if self.client == nil || self.client?.fileDescriptor == -1
+            if self.client == nil || !self.client.unsafelyUnwrapped.isActive
                 || self.client?.share != name
             {
                 self.client = try self.connect(shareName: name, encrypted: encrypted)
@@ -492,12 +497,14 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
             } catch POSIXError.ENOLINK {
                 // `libsmb2` can not read symlink attributes using `stat`, so if we get
                 // the related error, we simply open file as reparse point then use `fstat`.
-                let file = try SMB2FileHandle(path: path, flags: O_RDONLY | O_SYMLINK, on: client)
+                let file = try SMB2FileHandle(path: path, .readOnly, options: .symlink, on: client)
                 stat = try file.fstat()
             }
             var result = [URLResourceKey: any Sendable]()
-            result[.nameKey] = path.fileURL().lastPathComponent
-            result[.pathKey] = path.fileURL(stat.isDirectory).path
+            let (_, fileName) = path.pathComponents
+            let fullPath = path.trimmedPath
+            result[.nameKey] = fileName
+            result[.pathKey] = stat.isDirectory ? fullPath + "/" : fullPath
             stat.populateResourceValue(&result)
             return result
         }
@@ -766,7 +773,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
             } catch POSIXError.ENOLINK {
                 // `libsmb2` can not read symlink attributes using `stat`, so if we get
                 // the related error, we simply open file as reparse point then use `fstat`.
-                let file = try SMB2FileHandle(path: path, flags: O_RDONLY | O_SYMLINK, on: client)
+                let file = try SMB2FileHandle(path: path, .readOnly, options: .symlink, on: client)
                 stat = try file.fstat()
             }
             switch stat.resourceType {
@@ -807,7 +814,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         atPath path: String, atOffset: UInt64, completionHandler: SimpleCompletionHandler
     ) {
         with(completionHandler: completionHandler) { client in
-            try client.truncate(path, toLength: atOffset)
+            try client.resize(path, to: atOffset)
         }
     }
 
@@ -946,9 +953,9 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
             let size = try Int64(file.fstat().smb2_size)
 
             var shouldContinue = true
-            try file.lseek(offset: offset, whence: .set)
+            try file.seek(offset: offset, from: .start)
             while shouldContinue {
-                let offset = try file.lseek(offset: 0, whence: .current)
+                let offset = try file.seek(offset: 0, from: .current)
                 let data = try file.read()
                 if data.isEmpty {
                     break
@@ -996,7 +1003,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
             var offset = range.lowerBound
             do {
                 let file = try SMB2FileHandle(forReadingAtPath: path, on: client)
-                try file.lseek(offset: range.lowerBound, whence: .set)
+                try file.seek(offset: range.lowerBound, from: .start)
                 while offset < range.upperBound {
                     // Read optimal read size, or less if less is remaining.
                     let remainingLength = range.upperBound - offset
@@ -1283,7 +1290,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
                   let stream = InputStream(url: url)
             else {
                 throw POSIXError(
-                    .EIO,
+                    .ioError,
                     description:
                     "Could not create Stream from given URL, or given URL is not a local file."
                 )
@@ -1336,7 +1343,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         with(completionHandler: completionHandler) { client in
             guard url.isFileURL, let stream = OutputStream(url: url, append: false) else {
                 throw POSIXError(
-                    .EIO,
+                    .ioError,
                     description:
                     "Could not create Stream from given URL, or given URL is not a local file."
                 )
@@ -1381,16 +1388,16 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         completionHandler: @Sendable @escaping (_ result: Result<[SMB2FileChangeInfo], any Error>) -> Void
     ) {
         with(completionHandler: completionHandler) { client in
-            var flags = O_RDONLY | O_SYNC
+            var options: FileDescriptor.OpenOptions = .sync
             switch try client.stat(path).resourceType {
             case .directory:
-                flags |= O_DIRECTORY
+                options.insert(.directory)
             case .link:
-                flags |= O_SYMLINK
+                options.insert(.symlink)
             default:
                 break
             }
-            let file = try SMB2FileHandle(path: path, flags: flags, on: client)
+            let file = try SMB2FileHandle(path: path, .readOnly, options: options, on: client)
             return try file.changeNotify(for: filter)
         }
     }
@@ -1435,7 +1442,7 @@ extension SMB2Manager {
     }
 
     private func connect(shareName: String, encrypted: Bool) throws -> SMB2Client {
-        let client = try SMB2Client(timeout: _timeout)
+        let client = try SMB2Client()
         self.client = client
         initClient(client, encrypted: encrypted)
         let server = url.host! + (url.port.map { ":\($0)" } ?? "")
@@ -1506,14 +1513,13 @@ extension SMB2Manager {
         -> [[URLResourceKey: any Sendable]]
     {
         var contents = [[URLResourceKey: any Sendable]]()
-        let dir = try SMB2Directory(path.canonical, on: client)
+        let dir = try SMB2Directory(path.trimmedPath, on: client)
         for ent in dir {
             let name = String(cString: ent.name)
             if [".", ".."].contains(name) { continue }
             var result = [URLResourceKey: any Sendable]()
             result[.nameKey] = name
-            result[.pathKey] =
-                path.fileURL().appendingPathComponent(name, isDirectory: ent.st.isDirectory).path
+            result[.pathKey] = path.appendingPath(name, isDirectory: ent.st.isDirectory)
             ent.st.populateResourceValue(&result)
             contents.append(result)
         }
@@ -1552,7 +1558,7 @@ extension SMB2Manager {
             var totalCopied: Int64 = 0
             for item in list {
                 let itemPath = try item.path.unwrap()
-                let destPath = itemPath.canonical
+                let destPath = itemPath.trimmedPath
                     .replacingOccurrences(of: path, with: toPath, options: .anchored)
                 if item.isDirectory {
                     try client.mkdir(destPath)
@@ -1628,7 +1634,7 @@ extension SMB2Manager {
         while shouldContinue {
             let data = try fileRead.read()
             written += try fileWrite.write(data: data)
-            let offset = try fileRead.lseek(offset: 0, whence: .current)
+            let offset = try fileRead.seek(offset: 0, from: .current)
             if let progress {
                 shouldContinue = progress(Int64(written), offset, size) != nil
             }
@@ -1673,7 +1679,7 @@ extension SMB2Manager {
         try stream.withOpenStream {
             var shouldContinue = true
             var sent: Int64 = 0
-            try file.lseek(offset: range.lowerBound, whence: .set)
+            try file.seek(offset: range.lowerBound, from: .start)
             while shouldContinue {
                 let prefCount = Int(min(Int64(file.optimizedReadSize), Int64(size - sent)))
                 guard prefCount > 0 else {
@@ -1687,7 +1693,7 @@ extension SMB2Manager {
                 let written = try stream.write(data)
                 guard written == data.count else {
                     throw POSIXError(
-                        .EIO, description: "Inconsistency in reading from SMB file handle."
+                        .ioError, description: "Inconsistency in reading from SMB file handle."
                     )
                 }
                 sent += Int64(written)
@@ -1702,9 +1708,9 @@ extension SMB2Manager {
     ) throws {
         let file: SMB2FileHandle
         if let offset {
-            try client.truncate(toPath, toLength: .init(offset))
+            try client.resize(toPath, to: .init(offset))
             file = try SMB2FileHandle(forOutputAtPath: toPath, on: client)
-            try file.lseek(offset: offset, whence: .set)
+            try file.seek(offset: offset, from: .start)
         } else {
             file = try SMB2FileHandle(forCreatingIfNotExistsAtPath: toPath, on: client)
         }
@@ -1717,15 +1723,15 @@ extension SMB2Manager {
                 if segment.isEmpty {
                     break
                 }
-                let written = try file.pwrite(data: segment, offset: UInt64(offset ?? 0) + totalWritten)
+                let written = try file.write(toAbsoluteOffset: UInt64(offset ?? 0) + totalWritten, data: segment)
                 if written != segment.count {
                     throw POSIXError(
-                        .EIO, description: "Inconsistency in writing to SMB file handle."
+                        .ioError, description: "Inconsistency in writing to SMB file handle."
                     )
                 }
 
                 totalWritten += UInt64(segment.count)
-                var offset = try file.lseek(offset: 0, whence: .current)
+                var offset = try file.seek(offset: 0, from: .current)
                 if offset > totalWritten {
                     offset = Int64(totalWritten)
                 }

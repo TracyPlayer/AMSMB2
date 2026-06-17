@@ -9,6 +9,11 @@
 
 import Foundation
 import SMB2
+#if canImport(System)
+import System
+#else
+import SystemPackage
+#endif
 
 #if !canImport(Darwin)
 let USEC_PER_SEC = 1_000_000
@@ -22,7 +27,7 @@ public typealias SendableMetatype = Any
 extension Optional {
     func unwrap() throws -> Wrapped {
         guard let self = self else {
-            throw POSIXError(.ENODATA, description: "Invalid/Empty data.")
+            throw POSIXError(.noData, description: "Invalid/Empty data.")
         }
         return self
     }
@@ -30,8 +35,8 @@ extension Optional {
 
 extension Optional where Wrapped: SMB2Client {
     func unwrap() throws -> SMB2Client {
-        guard let self = self, self.fileDescriptor >= 0 else {
-            throw POSIXError(.ENOTCONN, description: "SMB2 server not connected.")
+        guard let self = self, self.fileDescriptor.isValidSocket else {
+            throw POSIXError(.socketNotConnected, description: "SMB2 server not connected.")
         }
         return self
     }
@@ -52,30 +57,21 @@ extension RawRepresentable where RawValue == UInt16 {
 extension POSIXError {
     static func throwIfError<Number: SignedInteger>(_ result: Number, description: String?) throws {
         guard result < 0 else { return }
-        let errno = Int32(-result)
+        let errno = Errno(rawValue: CInt(-result))
         let errorDesc = description.map { "Error code \(errno): \($0)" }
-        throw POSIXError(.init(errno), description: errorDesc)
+        throw POSIXError(errno, description: errorDesc)
     }
-
-    static func throwIfErrorStatus(_ status: NTStatus) throws {
-        if status.severity == .error {
-            throw POSIXError(
-                status.posixErrorCode,
-                description: "Error 0x\(String(status.rawValue, radix: 16, uppercase: true)): \(status.localizedDescription)"
-            )
-        }
-    }
-
-    init(_ code: POSIXError.Code, description: String?) {
-        let userInfo: [String: Any] =
-            description.map { [NSLocalizedDescriptionKey: $0] } ?? [:]
-        self = POSIXError(code, userInfo: userInfo)
+    
+    public init(_ code: Errno, description: String?) {
+        let description = description ?? code.description
+        let userInfo: [String: Any] = [NSLocalizedDescriptionKey: description]
+        self = POSIXError(.init(code), userInfo: userInfo)
     }
 }
 
 extension POSIXErrorCode {
-    init(_ code: Int32) {
-        self = POSIXErrorCode(rawValue: code) ?? .ECANCELED
+    init(_ code: Errno) {
+        self = POSIXErrorCode(rawValue: code.rawValue) ?? .ECANCELED
     }
 }
 
@@ -233,23 +229,34 @@ extension Data {
     }
 }
 
-extension String {
-    var canonical: String {
-        trimmingCharacters(in: .init(charactersIn: "/\\"))
-    }
+extension CharacterSet {
+    static let pathSeparator = CharacterSet(charactersIn: "/\\")
+}
 
-    func fileURL(_ isDirectory: Bool = false) -> URL {
-        if #available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *) {
-            return .init(
-                filePath: self, directoryHint: isDirectory ? .isDirectory : .notDirectory,
-                relativeTo: .init(filePath: "/")
-            )
-        } else {
-            return .init(
-                fileURLWithPath: self, isDirectory: isDirectory,
-                relativeTo: .init(fileURLWithPath: "/")
-            )
+extension String {
+    var trimmedPath: String {
+        trimmingCharacters(in: .pathSeparator)
+    }
+    
+    func appendingPath(_ component: String, isDirectory: Bool = false) -> String {
+        var result = self
+        if result.hasSuffix("/") || result.hasSuffix("\\") {
+            result.removeLast()
         }
+        result = self + "/" + component.trimmedPath
+        if isDirectory && !result.hasSuffix("/") {
+            result += "/"
+        }
+        return result
+    }
+    
+    var pathComponents: (dirName: String, fileName: String) {
+        guard let slashIndex = lastIndex(where: { $0 == "/" || $0 == "\\" }) else {
+            return ("", self)
+        }
+        let dirName = String(self[startIndex..<slashIndex])
+        let fileName = String(self[index(after: slashIndex)...]).trimmedPath
+        return (dirName, fileName)
     }
 }
 
