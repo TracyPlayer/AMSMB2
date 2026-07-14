@@ -439,10 +439,18 @@ extension SMB2FileHandle {
         
         var smb2Flag: UInt32 {
             var result: UInt32 = 0
-            if contains(.shared) { result |= 0x0000_0001 }
-            if contains(.exclusive) { result |= 0x0000_0002 }
-            if contains(.unlock) { result |= 0x0000_0004 }
-            if contains(.nonBlocking) { result |= 0x0000_0010 }
+            if contains(.shared) {
+                result |= 0x0000_0001
+            }
+            if contains(.exclusive) {
+                result |= 0x0000_0002
+            }
+            if contains(.unlock) {
+                result |= 0x0000_0004
+            }
+            if contains(.nonBlocking) {
+                result |= 0x0000_0010
+            }
             return result
         }
     }

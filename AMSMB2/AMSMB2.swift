@@ -71,11 +71,19 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
         c.append((label: "url", value: url))
         c.append((label: "isConnected", value: (client?.isActive ?? false)))
         c.append((label: "timeout", value: _timeout))
-        if _domain.isEmpty { c.append((label: "domain", value: _domain)) }
-        if _workstation.isEmpty { c.append((label: "workstation", value: _workstation)) }
-        if _workstation.isEmpty { c.append((label: "workstation", value: _workstation)) }
+        if _domain.isEmpty {
+            c.append((label: "domain", value: _domain))
+        }
+        if _workstation.isEmpty {
+            c.append((label: "workstation", value: _workstation))
+        }
+        if _workstation.isEmpty {
+            c.append((label: "workstation", value: _workstation))
+        }
         c.append((label: "user", value: _user))
-        if let connectedShare = client?.share { c.append((label: "share", value: connectedShare)) }
+        if let connectedShare = client?.share {
+            c.append((label: "share", value: connectedShare))
+        }
 
         return Mirror(self, children: c, displayStyle: .class)
     }
@@ -1516,7 +1524,9 @@ extension SMB2Manager {
         let dir = try SMB2Directory(path.trimmedPath, on: client)
         for ent in dir {
             let name = String(cString: ent.name)
-            if [".", ".."].contains(name) { continue }
+            if [".", ".."].contains(name) {
+                continue
+            }
             var result = [URLResourceKey: any Sendable]()
             result[.nameKey] = name
             result[.pathKey] = path.appendingPath(name, isDirectory: ent.st.isDirectory)

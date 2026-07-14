@@ -485,7 +485,9 @@ extension SMB2Client {
             let cbResult = cb.result
             
             try POSIXError.throwIfError(cbResult, description: errorString)
-            if let error = dataHandlerError { throw error }
+            if let error = dataHandlerError {
+                throw error
+            }
             return try (cbResult, resultData.unwrap())
         }
     }
@@ -522,7 +524,9 @@ extension SMB2Client {
             try wait_for_reply(&cb)
 
             try cb.status.throwIfError()
-            if let error = dataHandlerError { throw error }
+            if let error = dataHandlerError {
+                throw error
+            }
             return try (cb.status.rawValue, resultData.unwrap())
         }
     }
@@ -534,8 +538,12 @@ extension SMB2Client {
         
         var description: String {
             var result: [String] = []
-            if contains(.enabled) { result.append("Enabled") }
-            if contains(.required) { result.append("Required") }
+            if contains(.enabled) {
+                result.append("Enabled")
+            }
+            if contains(.required) {
+                result.append("Required")
+            }
             return result.joined(separator: ", ")
         }
         

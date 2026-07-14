@@ -20,19 +20,45 @@ public struct SMB2FileChangeType: OptionSet, Hashable, Sendable, CustomStringCon
     
     public var description: String {
         var result: [String] = []
-        if contains(.fileName) { result.append("File Name") }
-        if contains(.directoryName) { result.append("Directory Name") }
-        if contains(.attributes) { result.append("Attributes") }
-        if contains(.size) { result.append("Size") }
-        if contains(.write) { result.append("Write Time") }
-        if contains(.access) { result.append("Access Time") }
-        if contains(.create) { result.append("Creation Time") }
-        if contains(.extendedAttributes) { result.append("Extended Attributes") }
-        if contains(.security) { result.append("Security") }
-        if contains(.streamName) { result.append("Stream Name") }
-        if contains(.streamSize) { result.append("Stream Size") }
-        if contains(.streamWrite) { result.append("Stream Write") }
-        if contains(.recursive) { result.append("Watch Tree") }
+        if contains(.fileName) {
+            result.append("File Name")
+        }
+        if contains(.directoryName) {
+            result.append("Directory Name")
+        }
+        if contains(.attributes) {
+            result.append("Attributes")
+        }
+        if contains(.size) {
+            result.append("Size")
+        }
+        if contains(.write) {
+            result.append("Write Time")
+        }
+        if contains(.access) {
+            result.append("Access Time")
+        }
+        if contains(.create) {
+            result.append("Creation Time")
+        }
+        if contains(.extendedAttributes) {
+            result.append("Extended Attributes")
+        }
+        if contains(.security) {
+            result.append("Security")
+        }
+        if contains(.streamName) {
+            result.append("Stream Name")
+        }
+        if contains(.streamSize) {
+            result.append("Stream Size")
+        }
+        if contains(.streamWrite) {
+            result.append("Stream Write")
+        }
+        if contains(.recursive) {
+            result.append("Watch Tree")
+        }
         return result.joined(separator: ", ")
     }
     
