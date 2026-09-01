@@ -139,8 +139,8 @@ extension Dictionary where Key == URLResourceKey {
     }
 }
 
-extension Array where Element == [URLResourceKey: any Sendable] {
-    func sortedByPath(_ comparison: ComparisonResult) -> [[URLResourceKey: any Sendable]] {
+extension Array where Element == [URLResourceKey: Sendable & Codable] {
+    func sortedByPath(_ comparison: ComparisonResult) -> [[URLResourceKey: Sendable & Codable]] {
         sorted {
             guard let firstPath = $0.path, let secPath = $1.path else {
                 return false

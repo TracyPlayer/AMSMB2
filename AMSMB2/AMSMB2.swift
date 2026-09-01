@@ -417,7 +417,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
      */
     open func contentsOfDirectory(
         atPath path: String, recursive: Bool = false,
-        completionHandler: @Sendable @escaping (_ result: Result<[[URLResourceKey: any Sendable]], any Error>) -> Void
+        completionHandler: @Sendable @escaping (_ result: Result<[[URLResourceKey: Sendable & Codable]], any Error>) -> Void
     ) {
         with(completionHandler: completionHandler) { client in
             try self.listDirectory(client: client, path: path, recursive: recursive)
@@ -433,7 +433,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
      - Returns: An array of `[URLResourceKey: Any]` which holds files' attributes. file name is stored in `.nameKey`.
      */
     open func contentsOfDirectory(atPath path: String, recursive: Bool = false) async throws
-        -> [[URLResourceKey: any Sendable]]
+        -> [[URLResourceKey: Sendable & Codable]]
     {
         try await withCheckedThrowingContinuation { continuation in
             contentsOfDirectory(
@@ -496,7 +496,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
      */
     open func attributesOfItem(
         atPath path: String,
-        completionHandler: @Sendable @escaping (_ result: Result<[URLResourceKey: any Sendable], any Error>) -> Void
+        completionHandler: @Sendable @escaping (_ result: Result<[URLResourceKey: Sendable & Codable], any Error>) -> Void
     ) {
         with(completionHandler: completionHandler) { client in
             let stat: smb2_stat_64
@@ -508,7 +508,7 @@ public class SMB2Manager: NSObject, NSSecureCoding, Codable, NSCopying, CustomRe
                 let file = try SMB2FileHandle(path: path, .readOnly, options: .symlink, on: client)
                 stat = try file.fstat()
             }
-            var result = [URLResourceKey: any Sendable]()
+            var result = [URLResourceKey: Sendable & Codable]()
             let (_, fileName) = path.pathComponents
             let fullPath = path.trimmedPath
             result[.nameKey] = fileName
@@ -1518,16 +1518,16 @@ extension SMB2Manager {
 
 extension SMB2Manager {
     private func listDirectory(client: SMB2Client, path: String, recursive: Bool) throws
-        -> [[URLResourceKey: any Sendable]]
+        -> [[URLResourceKey: Sendable & Codable]]
     {
-        var contents = [[URLResourceKey: any Sendable]]()
+        var contents = [[URLResourceKey: Sendable & Codable]]()
         let dir = try SMB2Directory(path.trimmedPath, on: client)
         for ent in dir {
             let name = String(cString: ent.name)
             if [".", ".."].contains(name) {
                 continue
             }
-            var result = [URLResourceKey: any Sendable]()
+            var result = [URLResourceKey: Sendable & Codable]()
             result[.nameKey] = name
             result[.pathKey] = path.appendingPath(name, isDirectory: ent.st.isDirectory)
             ent.st.populateResourceValue(&result)

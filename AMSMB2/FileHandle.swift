@@ -848,15 +848,12 @@ extension smb2_stat_64 {
         resourceType == .directory
     }
 
-    func populateResourceValue(_ dic: inout [URLResourceKey: any Sendable]) {
-        dic.reserveCapacity(11 + dic.count)
-        dic[.fileSizeKey] = NSNumber(value: smb2_size)
-        dic[.linkCountKey] = NSNumber(value: smb2_nlink)
-        dic[.documentIdentifierKey] = NSNumber(value: smb2_ino)
+    func populateResourceValue(_ dic: inout [URLResourceKey: Sendable & Codable]) {
+        dic.reserveCapacity(8 + dic.count)
+        dic[.fileSizeKey] = Int64(smb2_size)
+        dic[.linkCountKey] = smb2_nlink
+        dic[.documentIdentifierKey] = smb2_ino
         dic[.fileResourceTypeKey] = resourceType.urlResourceType
-        dic[.isDirectoryKey] = NSNumber(value: resourceType == .directory)
-        dic[.isRegularFileKey] = NSNumber(value: resourceType == .file)
-        dic[.isSymbolicLinkKey] = NSNumber(value: resourceType == .link)
 
         dic[.contentModificationDateKey] = Date(
             timespec(tv_sec: Int(smb2_mtime), tv_nsec: Int(smb2_mtime_nsec))
@@ -872,6 +869,8 @@ extension smb2_stat_64 {
         )
     }
 }
+
+extension URLFileResourceType: Codable {}
 
 extension UUID {
     static let zero = UUID(uuid: uuid_t(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
